@@ -31,6 +31,7 @@ class Server {
     this.server.close();
     this.server = null;
     this.app = null;
+    this.wss.close();
     this.wss = null;
   }
 }
