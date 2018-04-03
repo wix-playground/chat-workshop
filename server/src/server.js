@@ -20,10 +20,10 @@ class Server {
 
       this.server.listen(this.port, () => {
         console.log('Listening on %d', this.server.address().port);
-        resolve()
+        resolve();
       });
     }).catch(e => {
-      console.log('start failed', e)
+      console.log('start failed', e);
     });
   }
 

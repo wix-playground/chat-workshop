@@ -1,5 +1,5 @@
 const serverFactory = require('../src/server');
-const getWebSocketClient = require('./utils/websocket-client')
+const getWebSocketClient = require('./utils/websocket-client');
 
 describe('chat server', () => {
   const serverPort = 8881;
@@ -13,11 +13,11 @@ describe('chat server', () => {
 
   afterEach(async () => {
     await server.stop();
-  })
+  });
 
   it('should establish connection', async () => {
     const status = await webSocketClient.connect();
-    expect(status).toEqual(webSocketClient.STATUS.CONNECTED)
+    expect(status).toEqual(webSocketClient.STATUS.CONNECTED);
   });
 
   it('should send and get messages', async () => {

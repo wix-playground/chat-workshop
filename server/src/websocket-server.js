@@ -5,7 +5,7 @@ const WebSocketServer = (httpServer) => {
 
   wss.on('connection', function connection(ws, req) {
     ws.on('message', function incoming(message) {
-      ws.send(message)
+      ws.send(message);
     });
   });
 

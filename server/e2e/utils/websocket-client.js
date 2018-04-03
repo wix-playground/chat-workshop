@@ -1,7 +1,7 @@
 function getWebSocketClient(url) {
   const STATUS = {
     CONNECTED: 'connected',
-  }
+  };
 
   const WebSocket = require('ws');
 
@@ -17,7 +17,7 @@ function getWebSocketClient(url) {
 
         webSocketClient.on('message', function message(receivedMessage) {
           resolve(receivedMessage);
-        })
+        });
       });
     },
     connect() {
@@ -29,7 +29,7 @@ function getWebSocketClient(url) {
         });
       });
     }
-  }
+  };
 }
 
-module.exports = getWebSocketClient
+module.exports = getWebSocketClient;
