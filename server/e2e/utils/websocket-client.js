@@ -1,30 +1,32 @@
+const uuid = require('uuid');
+const WebSocket = require('ws');
+
 function getWebSocketClient(url) {
   const STATUS = {
     CONNECTED: 'connected',
   };
 
-  const WebSocket = require('ws');
+  let client;
 
   return {
     STATUS,
-    sendMessageAndReceiveMessage(message) {
-      return new Promise((resolve, reject) => {
-        const webSocketClient = new WebSocket(url);
-
-        webSocketClient.on('open', function open() {
-          webSocketClient.send(message);
+    send(type) {
+      const data = [].slice.call(arguments, 1);
+      return new Promise((resolve) => {
+        const id = uuid.v4();
+        client.on('message', (data) => {
+          const msg = JSON.parse(data);
+          if (msg.id === id) {
+            resolve(msg.result);
+          }
         });
-
-        webSocketClient.on('message', function message(receivedMessage) {
-          resolve(receivedMessage);
-        });
+        client.send(JSON.stringify([type, data, id]));
       });
     },
     connect() {
       return new Promise((resolve, reject) => {
-        const webSocketClient = new WebSocket(url);
-
-        webSocketClient.on('open', function open() {
+        client = new WebSocket(url);
+        client.on('open', function open() {
           resolve(STATUS.CONNECTED);
         });
       });

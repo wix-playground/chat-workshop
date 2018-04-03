@@ -1,36 +1,55 @@
 const express = require('express');
 const http = require('http');
 const url = require('url');
-const WebSocketServer = require('./websocket-server');
+const WebSocket = require('ws');
 
 class Server {
   constructor(PORT = 8080) {
     this.port = PORT;
-    this.server = null;
-    this.app = null;
     this.wss = null;
+    this.handlers = {};
   }
 
   start() {
     return new Promise((resolve) => {
-      this.app = express();
-
-      this.server = http.createServer(this.app);
-      this.wss = WebSocketServer(this.server);
-
-      this.server.listen(this.port, () => {
-        console.log('Listening on %d', this.server.address().port);
+      const options = {
+        port: this.port,
+        host: '0.0.0.0'
+      };
+      this.wss = new WebSocket.Server(options, () => {
+        console.log('Listening on %d', this.port);
         resolve();
       });
+
+      this.wss.on('connection', this.onConnection.bind(this));
+      this.wss.on('error', this.onError.bind(this));
+
     }).catch(e => {
       console.log('start failed', e);
     });
   }
 
+  setHandlers(handlers = {}) {
+    this.handlers = handlers;
+  }
+
+  onError(err) {
+    console.error('on-error', err);
+  }
+
+  onConnection(ws) {
+    ws.on('message', (message) => this.onMessage(ws, message));
+  }
+
+  async onMessage(ws, message) {
+    const [type, data, id] = JSON.parse(message);
+    if (type in this.handlers) {
+      const result = await this.handlers[type].apply(null, data);
+      ws.send(JSON.stringify({id, result}));
+    }
+  }
+
   stop() {
-    this.server.close();
-    this.server = null;
-    this.app = null;
     this.wss.close();
     this.wss = null;
   }
