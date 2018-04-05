@@ -38,6 +38,7 @@ class Server {
   }
 
   onConnection(ws) {
+    ws.send('connection opened');
     ws.on('message', (message) => this.onMessage(ws, message));
   }
 
