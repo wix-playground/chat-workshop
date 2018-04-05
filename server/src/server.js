@@ -4,6 +4,8 @@ const url = require('url');
 const WebSocket = require('ws');
 const MESSAGE_TYPES = require('./message-types');
 
+const MESSAGE_LIMIT = 100;
+
 class Server {
   constructor(PORT = 8080) {
     this.port = PORT;
@@ -63,11 +65,19 @@ class Server {
         client.send(JSON.stringify([MESSAGE_TYPES.INCOMING, chatMessage]));
       }
     });
-    this.chatMessages.push(chatMessage)
+    this.fillChatMessageHistory(chatMessage)
   }
 
   onRequestChatMessages(ws, id) {
     ws.send(JSON.stringify({id, result: this.chatMessages}));
+  }
+
+  fillChatMessageHistory(chatMessage) {
+    this.chatMessages.push(chatMessage)
+    const length = this.chatMessages.length;
+    if (length > MESSAGE_LIMIT) {
+      this.chatMessages.splice(0, length - MESSAGE_LIMIT);
+    }
   }
 
   stop() {

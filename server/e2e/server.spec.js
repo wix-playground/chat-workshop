@@ -119,6 +119,23 @@ describe('WebSocket Server', () => {
         {text: 'hello world 2'},
       ])
     });
+
+    it('should store up to a 100 messages', async () => {
+      const client = createClient();
+      const client2 = createClient();
+      await createServer();
+      await client.connect();
+      await client2.connect();
+
+      for(let i = 0; i < 150; i++) {
+        await client2.send(MESSAGE_TYPES.BROADCAST, {text: `hello world ${i}`});
+      }
+
+      const messages = await client.send(MESSAGE_TYPES.REQUEST_MESSAGES)
+      expect(messages).toHaveLength(100);
+      expect(messages[0]).toEqual(expect.objectContaining({text: 'hello world 50'}))
+      expect(messages[99]).toEqual(expect.objectContaining({text: 'hello world 149'}))
+    })
   })
 });
 
