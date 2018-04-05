@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const url = require('url');
 const WebSocket = require('ws');
+const MESSAGE_TYPES = require('./message-types');
 
 class Server {
   constructor(PORT = 8080) {
@@ -23,6 +24,8 @@ class Server {
 
       this.wss.on('connection', this.onConnection.bind(this));
       this.wss.on('error', this.onError.bind(this));
+
+      this.handlers[MESSAGE_TYPES.BROADCAST] = this.onBroadcastChatMessage.bind(this);
 
     }).catch(e => {
       console.log('start failed', e);
@@ -48,6 +51,14 @@ class Server {
       const result = await this.handlers[type].apply(null, data);
       ws.send(JSON.stringify({id, result}));
     }
+  }
+
+  onBroadcastChatMessage(chatMessage) {
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify([MESSAGE_TYPES.INCOMING, chatMessage]));
+      }
+    });
   }
 
   stop() {

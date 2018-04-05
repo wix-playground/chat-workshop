@@ -23,6 +23,15 @@ function getWebSocketClient(url) {
         client.send(JSON.stringify([type, data, id]));
       });
     },
+    onSend(type, handler) {
+      client.on('message', (message) => {
+        const data = JSON.parse(message);
+        if (Array.isArray(data)) {
+          const [type, payload] = data
+          handler(type, payload);
+        }
+      });
+    },
     connect() {
       return new Promise((resolve, reject) => {
         client = new WebSocket(url);

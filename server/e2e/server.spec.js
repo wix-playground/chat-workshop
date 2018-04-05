@@ -1,5 +1,6 @@
 const serverFactory = require('../src/server');
 const getWebSocketClient = require('./utils/websocket-client');
+const MESSAGE_TYPES = require('../src/message-types')
 
 let server;
 let port;
@@ -73,7 +74,38 @@ describe('WebSocket Server', () => {
     expect(await p1).toEqual(3);
     expect(await p2).toEqual(9);
   });
+
+  describe('broadcast', () => {
+    it('should broadcast chat messages to all other clients', async () => {
+      const client1 = createClient();
+      const client2 = createClient();
+      const client3 = createClient();
+
+      await createServer();
+
+      await client1.connect();
+      await client2.connect();
+      await client3.connect();
+      const incomingMessageHandler1 = jest.fn();
+      const incomingMessageHandler2 = jest.fn();
+      const incomingMessageHandler3 = jest.fn();
+      client1.onSend(MESSAGE_TYPES.INCOMING, incomingMessageHandler1)
+      client2.onSend(MESSAGE_TYPES.INCOMING, incomingMessageHandler2)
+      client3.onSend(MESSAGE_TYPES.INCOMING, incomingMessageHandler3)
+
+      await client1.send(MESSAGE_TYPES.BROADCAST, {text: 'hello world'});
+      // @TODO: investigate runAllTicks and other jest helpers
+      await sleep(100);
+      expect(incomingMessageHandler1).toHaveBeenCalledWith(MESSAGE_TYPES.INCOMING, {text: 'hello world'});
+      expect(incomingMessageHandler2).toHaveBeenCalledWith(MESSAGE_TYPES.INCOMING, {text: 'hello world'});
+      expect(incomingMessageHandler3).toHaveBeenCalledWith(MESSAGE_TYPES.INCOMING, {text: 'hello world'});
+    });
+  });
 });
+
+const sleep = (timeout) => new Promise((resolve) => {
+  setTimeout(resolve, timeout)
+})
 
 async function createServer(handlers = {}) {
   server = serverFactory.create(port);
