@@ -101,6 +101,25 @@ describe('WebSocket Server', () => {
       expect(incomingMessageHandler3).toHaveBeenCalledWith(MESSAGE_TYPES.INCOMING, {text: 'hello world'});
     });
   });
+
+  describe('message history', () => {
+    it('should return stored messages', async () => {
+      const client = createClient();
+      const client2 = createClient();
+      await createServer();
+      await client.connect();
+      await client2.connect();
+
+      await client2.send(MESSAGE_TYPES.BROADCAST, {text: 'hello world 1'});
+      await client2.send(MESSAGE_TYPES.BROADCAST, {text: 'hello world 2'});
+
+      const messages = await client.send(MESSAGE_TYPES.REQUEST_MESSAGES)
+      expect(messages).toEqual([
+        {text: 'hello world 1'},
+        {text: 'hello world 2'},
+      ])
+    });
+  })
 });
 
 const sleep = (timeout) => new Promise((resolve) => {

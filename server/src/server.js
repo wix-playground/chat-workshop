@@ -9,6 +9,7 @@ class Server {
     this.port = PORT;
     this.wss = null;
     this.handlers = {};
+    this.chatMessages = [];
   }
 
   start() {
@@ -47,6 +48,9 @@ class Server {
 
   async onMessage(ws, message) {
     const [type, data, id] = JSON.parse(message);
+    if (type === MESSAGE_TYPES.REQUEST_MESSAGES) {
+      await this.onRequestChatMessages(ws, id);
+    }
     if (type in this.handlers) {
       const result = await this.handlers[type].apply(null, data);
       ws.send(JSON.stringify({id, result}));
@@ -59,6 +63,11 @@ class Server {
         client.send(JSON.stringify([MESSAGE_TYPES.INCOMING, chatMessage]));
       }
     });
+    this.chatMessages.push(chatMessage)
+  }
+
+  onRequestChatMessages(ws, id) {
+    ws.send(JSON.stringify({id, result: this.chatMessages}));
   }
 
   stop() {
