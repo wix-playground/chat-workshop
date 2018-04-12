@@ -1,13 +1,7 @@
-const server = require('./server');
+const server = require('./chat-server')();
+const client = require('./chat-client');
 
-const serverInstance = server.create(8881);
-
-serverInstance
-  .start()
-  .then(() => {
-    console.log('server started');
-  })
-  .catch(e => {
-    console.log('failed', e);
-  })
-;
+module.exports = {
+  server,
+  client
+}
