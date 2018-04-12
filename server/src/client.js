@@ -1,5 +1,18 @@
 const uuid = require('uuid');
-const WebSocket = require('ws');
+const WebSocket = require('isomorphic-ws');
+
+function wrapWebsocketClient(client) {
+  /**
+   * ws and global.WebSocket APIs don't match, RN implementation of
+   * global.WebSocket for some reason has matching methods (onopen,
+   * onmessage) set as null. Furthermore, addEventListener on ws has
+   * a different functionality
+   */
+  if (!client.on) {
+    client.on = client.addEventListener;
+  }
+  return client;
+}
 
 function webSocketClient(url) {
   const STATUS = {
@@ -47,7 +60,7 @@ function webSocketClient(url) {
     },
     connect() {
       return new Promise((resolve, reject) => {
-        client = new WebSocket(url);
+        client = wrapWebsocketClient(new WebSocket(url));
         client.on('open', () => resolve(STATUS.CONNECTED));
         client.on('message', onMessage);
       });
