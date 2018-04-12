@@ -28,7 +28,7 @@ class Server {
       this.wss.on('connection', this.onConnection.bind(this));
       this.wss.on('error', this.onError.bind(this));
 
-      this.handlers[MESSAGE_TYPES.BROADCAST] = this.onBroadcastChatMessage.bind(this);
+      // this.handlers[MESSAGE_TYPES.BROADCAST] = this.onBroadcastChatMessage.bind(this);
 
     }).catch(e => {
       console.log('start failed', e);
@@ -44,7 +44,6 @@ class Server {
   }
 
   onConnection(ws) {
-    ws.send('connection opened');
     ws.on('message', (message) => this.onMessage(ws, message));
   }
 
@@ -54,8 +53,14 @@ class Server {
       await this.onRequestChatMessages(ws, id);
     }
     if (type in this.handlers) {
-      const result = await this.handlers[type].apply(null, data);
-      ws.send(JSON.stringify({id, result}));
+      try {
+        const result = await this.handlers[type].apply(null, data.concat(ws));
+        ws.send(response(id, result));
+      } catch (ex) {
+        ws.send(error(id, ex));
+      }
+    } else {
+      console.error(`no handler for "${type}" message!`);
     }
   }
 
@@ -65,7 +70,7 @@ class Server {
         client.send(JSON.stringify([MESSAGE_TYPES.INCOMING, chatMessage]));
       }
     });
-    this.fillChatMessageHistory(chatMessage)
+    this.fillChatMessageHistory(chatMessage);
   }
 
   onRequestChatMessages(ws, id) {
@@ -73,7 +78,7 @@ class Server {
   }
 
   fillChatMessageHistory(chatMessage) {
-    this.chatMessages.push(chatMessage)
+    this.chatMessages.push(chatMessage);
     const length = this.chatMessages.length;
     if (length > MESSAGE_LIMIT) {
       this.chatMessages.splice(0, length - MESSAGE_LIMIT);
@@ -84,6 +89,18 @@ class Server {
     this.wss.close();
     this.wss = null;
   }
+}
+
+function response(id, result) {
+  return JSON.stringify(['response', {id, result}]);
+}
+
+function error(id, ex) {
+  return JSON.stringify(['response', {
+    id,
+    result: null,
+    error: {message: ex.message, code: ex.code}
+  }]);
 }
 
 module.exports = {
