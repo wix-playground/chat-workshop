@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/run",
     "test": "jest tests/ src/"
   },
   "author": "Martynas Bardauskas <martynasb@wix.com>",
