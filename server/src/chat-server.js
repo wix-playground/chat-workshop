@@ -15,6 +15,7 @@ class ChatServer {
       channels: this.getChannels.bind(this),
       join: this.authorized.bind(this)(this.joinChannel.bind(this)),
       message: this.authorized.bind(this)(this.addMessage.bind(this)),
+      messages: this.authorized.bind(this)(this.getUserMessages.bind(this)),
       auth: this.authenticate.bind(this),
     });
   }
@@ -88,6 +89,10 @@ class ChatServer {
   }
 
   getMessages(channel) {
+    return this.channels[channel].messages;
+  }
+
+  getUserMessages(session, channel) {
     return this.channels[channel].messages;
   }
 

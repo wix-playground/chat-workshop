@@ -31,7 +31,15 @@ describe('Chat Server', () => {
 
   it('should send message to channel', async () => {
     await client.send('general', 'hello yall!');
-    expect(await chat.getMessages('general')).toEqual([
+    const messages = await chat.getMessages('general')
+    expect(messages).toEqual([
+      {timestamp: expect.any(Number), content: 'hello yall!'}
+    ]);
+  });
+
+  it('should get messages from a channel', async () => {
+    await client.send('general', 'hello yall!');
+    expect(await client.getMessages('general')).toEqual([
       {timestamp: expect.any(Number), content: 'hello yall!'}
     ]);
   });
@@ -50,6 +58,15 @@ describe('Chat Server', () => {
   it('should not allow to send message when unauthenticated', async () => {
     const another = await unauthenticatedClient();
     await expect(another.send('general', 'hello')).rejects.toEqual(expect.objectContaining(new PermissionError()));
+  });
+
+  it('should not allow to get channel messages when unauthenticated', async () => {
+    await client.send('general', 'yello!');
+    const another = await unauthenticatedClient();
+    await expect(another.getMessages('general')).rejects.toEqual(expect.objectContaining(new PermissionError()));
+    expect(await client.getMessages('general')).toEqual([
+      {timestamp: expect.any(Number), content: 'yello!'}
+    ]);
   });
 
   it('should broadcast messsage to another client in same chat', async () => {

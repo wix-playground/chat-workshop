@@ -13,6 +13,9 @@ function chatClient() {
     getChannels() {
       return client.send('channels');
     },
+    getMessages(channel) {
+      return client.send('messages', session, channel)
+    },
     join(name) {
       return client.send('join', session, name);
     },
