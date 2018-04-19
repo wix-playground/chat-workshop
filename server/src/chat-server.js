@@ -65,10 +65,11 @@ class ChatServer {
 
   addMessage(session, channel, message) {
     const chan = this.channels[channel];
-    chan.messages.push({
+    const fullMessage = {
       content: message,
       timestamp: this.timeService.now(),
-    });
+    };
+    chan.messages.push(fullMessage);
     return Promise.all([
       chan.users.map((name) => {
         if (name !== session.name) {
@@ -85,7 +86,7 @@ class ChatServer {
         }
         return Promise.resolve();
       })
-    ]);
+    ]).then(() => fullMessage);
   }
 
   getMessages(channel) {

@@ -44,6 +44,13 @@ describe('Chat Server', () => {
     ]);
   });
 
+  it('should get message with timestamp as a response of sending one', async () => {
+    const message = await client.send('general', 'hello yall!');
+    expect(message).toEqual(
+      {timestamp: expect.any(Number), content: 'hello yall!'}
+    );
+  });
+
   it('should not allow to connect with wrong password', async () => {
     const another = chatClient();
     const connection = another.connect('127.0.0.1', chat.getPort(), 'zucceberg', 'yo');
