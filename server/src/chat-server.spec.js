@@ -11,7 +11,7 @@ describe('Chat Server', () => {
 
       server.addMessage({}, 'a', 'hi');
       expect(server.getMessages('a')).toEqual([
-        {content: 'hi', timestamp}
+        {content: 'hi', timestamp, id: expect.any(String)}
       ]);
     });
   });
@@ -32,7 +32,7 @@ describe('Chat Server', () => {
 
       server.addChannel('a');
       expect(server.getMessages('a')).toEqual([
-        {content: 'hi', timestamp}
+        {content: 'hi', timestamp, id: expect.any(String)}
       ]);
     });
   });

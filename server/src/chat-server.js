@@ -1,5 +1,6 @@
 const webSocketServer = require('./server');
 const {AuthError, PermissionError} = require('./errors');
+const uuid = require('uuid');
 
 class ChatServer {
   constructor(port, timeService, idGenerator) {
@@ -66,6 +67,7 @@ class ChatServer {
   addMessage(session, channel, message) {
     const chan = this.channels[channel];
     const fullMessage = {
+      id: uuid.v4(),
       content: message,
       timestamp: this.timeService.now(),
     };
@@ -76,10 +78,9 @@ class ChatServer {
           const user = this.users[name];
           const data = JSON.stringify([
             'event', ['message', [{
-              content: message,
+              ...fullMessage,
               to: channel,
               from: session.name,
-              timestamp: this.timeService.now(),
             }]],
           ]);
           return new Promise((resolve) => user.socket.send(data, {}, resolve));

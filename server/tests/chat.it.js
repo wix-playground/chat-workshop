@@ -33,21 +33,21 @@ describe('Chat Server', () => {
     await client.send('general', 'hello yall!');
     const messages = await chat.getMessages('general')
     expect(messages).toEqual([
-      {timestamp: expect.any(Number), content: 'hello yall!'}
+      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
     ]);
   });
 
   it('should get messages from a channel', async () => {
     await client.send('general', 'hello yall!');
     expect(await client.getMessages('general')).toEqual([
-      {timestamp: expect.any(Number), content: 'hello yall!'}
+      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
     ]);
   });
 
   it('should get message with timestamp as a response of sending one', async () => {
     const message = await client.send('general', 'hello yall!');
     expect(message).toEqual(
-      {timestamp: expect.any(Number), content: 'hello yall!'}
+      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
     );
   });
 
@@ -72,7 +72,7 @@ describe('Chat Server', () => {
     const another = await unauthenticatedClient();
     await expect(another.getMessages('general')).rejects.toEqual(expect.objectContaining(new PermissionError()));
     expect(await client.getMessages('general')).toEqual([
-      {timestamp: expect.any(Number), content: 'yello!'}
+      {timestamp: expect.any(Number), content: 'yello!', id: expect.any(String)}
     ]);
   });
 
@@ -100,6 +100,7 @@ describe('Chat Server', () => {
       from: 'eric',
       timestamp: expect.any(Number),
       content: 'hi',
+      id: expect.any(String)
     });
   });
 
