@@ -1,7 +1,1 @@
-const server = require('./chat-server')();
-const client = require('./chat-client');
-
-module.exports = {
-  server,
-  client
-}
+module.exports = require('./chat-server')()

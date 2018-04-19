@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { WS_URL } from './config'
+import { WS_HOST, WS_PORT } from './config'
+import getWebSocketClient from 'wix-chat-workshop-server/client';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -9,9 +10,8 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
-    const ws = new WebSocket(WS_URL);
-    ws.addEventListener('open', () => console.log('connopen'))
-    ws.addEventListener('message', (m) => this.setState({message: m.data}))
+    const ws = getWebSocketClient()
+    ws.connect(WS_HOST, WS_PORT, 'martynas', 'whoa').then(() => this.setState({message: 'connected'}))
   }
 
   render() {

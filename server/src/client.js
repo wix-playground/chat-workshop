@@ -14,6 +14,10 @@ function wrapWebsocketClient(client) {
   return client;
 }
 
+function getPayloadFromEvent(event) {
+  return typeof event === 'string' ? event : event.data;
+}
+
 function webSocketClient(url) {
   const STATUS = {
     CONNECTED: 'connected',
@@ -23,7 +27,8 @@ function webSocketClient(url) {
   let client;
   let listeners = {};
 
-  function onMessage(payload) {
+  function onMessage(websocketEvent) {
+    const payload = getPayloadFromEvent(websocketEvent);
     const [type, data] = JSON.parse(payload);
     if (type === 'response') {
       const {id, result, error} = data;
