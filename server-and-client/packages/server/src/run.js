@@ -1,8 +1,4 @@
-const chatServer = require('./chat-server');
-
-const serverInstance = chatServer()(8881);
-
-serverInstance
+require('./index')
   .start()
   .then(() => {
     console.log('server started');

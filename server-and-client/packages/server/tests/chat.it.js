@@ -1,6 +1,10 @@
+const {chatClientFactory} = require('wix-chat-workshop-client');
+const WebSocket = require('isomorphic-ws');
+
 const chatServer = require('../src/chat-server');
-const chatClient = require('../src/chat-client');
 const {AuthError, PermissionError} = require('../src/errors');
+
+const chatClient = chatClientFactory(WebSocket);
 
 describe('Chat Server', () => {
   let chat;

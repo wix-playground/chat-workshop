@@ -1,7 +1,11 @@
+const {webSocketClientFactory} = require('wix-chat-workshop-client');
+const WebSocket = require('isomorphic-ws');
+
 const serverFactory = require('../src/server');
-const webSocketClient = require('../src/client');
 const ProtocolError = require('../src/error');
 const MESSAGE_TYPES = require('../src/message-types');
+
+const webSocketClient = webSocketClientFactory(WebSocket);
 
 let server;
 let port;

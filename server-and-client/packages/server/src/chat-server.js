@@ -119,6 +119,7 @@ class ChatServer {
       sessionId: this.idGenerator.nextId(),
       socket: socket,
     };
+    console.log('>>> authenticated', name);
     return {
       sessionId: user.sessionId,
       name,
