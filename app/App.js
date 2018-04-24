@@ -1,8 +1,9 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 
 const chatClient = chatClientFactory(WebSocket)();
+const MAIN_CHANNEL = 'main'
 
 export default class App extends React.Component {
   constructor(props) {
@@ -10,22 +11,73 @@ export default class App extends React.Component {
     this.state = {
       connected: false,
       channels: [],
+      chatMessages: {},
     };
   }
 
-  componentDidMount() {
-    chatClient
-      .connect('192.168.132.19', 8881, 'donatasp', '123')
-      .then(() => chatClient.getChannels())
-      .then((channels) => this.setState({connected: true, channels}));
+  async componentDidMount() {
+    await chatClient.connect('192.168.132.40', 8881, 'donatasp', '123');
+    const channels = await chatClient.getChannels();
+    this.setState({connected: true, channels});
+    chatClient.onEvent('message', this.appendMessage);
+    const messages = await chatClient.getMessages(MAIN_CHANNEL);
+    this.setState({
+      chatMessages: {[MAIN_CHANNEL]: messages},
+    });
   }
+
+  sendMessage = async () => {
+    const msg = await chatClient.send(MAIN_CHANNEL, this.text);
+    this.appendMessage(MAIN_CHANNEL, msg);
+    this.text = '';
+  }
+
+  changeText = (text) => {
+    this.text = text;
+  }
+
+  renderHeader = () => {
+    return (
+      <View style={{flex: 1}}>
+        <View style={{flex: 1}}>
+          {this.state.connected ? this.renderChannels() : this.renderOffline()}
+        </View>
+        <View style={{flex: 1}}>
+          <TextInput style={{borderWidth: 1, borderColor: 'black', width: 200}} onChangeText={this.changeText}/>
+          <TouchableOpacity onPress={this.sendMessage}>
+            <Text>Send message</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )
+  }
+
+  renderItem = ({item}) => {
+    return <View><Text>{item.content}</Text></View>;
+  }
+
+  keyExtractor = (item, index) => index.toString()
 
   render() {
     return (
       <View style={styles.container}>
-        {this.state.connected ? this.renderChannels() : this.renderOffline()}
+        <FlatList
+          ListHeaderComponent={this.renderHeader}
+          data={this.state.chatMessages['main']}
+          renderItem={this.renderItem}
+          keyExtractor={this.keyExtractor}
+        />
       </View>
     );
+  }
+
+  appendMessage = (channel, message) => {
+    this.setState({
+      chatMessages: {
+        ...this.state.chatMessages,
+        [channel]: [...this.state.chatMessages[channel], message]
+      }
+    });
   }
 
   renderOffline = () => {
