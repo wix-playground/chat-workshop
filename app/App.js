@@ -60,7 +60,7 @@ export default class App extends React.Component {
 
   render() {
     return (
-      <View style={styles.container}>
+      <View testID="welcome" style={styles.container}>
         <FlatList
           ListHeaderComponent={this.renderHeader}
           data={this.state.chatMessages['main']}
