@@ -17,7 +17,8 @@
     "android": "react-native-scripts android",
     "ios": "react-native-scripts ios",
     "test": "jest",
-    "e2e": "detox test --configuration ios.sim --debug-synchronization 2000"
+    "setup:binaries": "sh setup-binaries.sh",
+    "e2e": "npm run setup:binaries && detox test --configuration ios.sim --debug-synchronization 2000"
   },
   "jest": {
     "preset": "jest-expo"
@@ -31,7 +32,7 @@
   "detox": {
     "configurations": {
       "ios.sim": {
-        "binaryPath": "bin/Exponent-2.4.6.app",
+        "binaryPath": "bin/Exponent-2.app",
         "type": "ios.simulator",
         "name": "iPhone 7"
       }
