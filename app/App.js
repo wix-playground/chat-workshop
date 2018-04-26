@@ -65,8 +65,7 @@ class MessageInput extends PureComponent {
             >Send</Text>
           </TouchableOpacity>) : null}
       </View>
-
-    )
+    );
   }
 }
 
@@ -76,7 +75,7 @@ export default class App extends PureComponent {
     this.state = {
       connected: false,
       channels: [],
-      chatMessages: {},
+      chatMessages: {[MAIN_CHANNEL]: []},
       text: ''
     };
   }
@@ -143,9 +142,20 @@ export default class App extends PureComponent {
 
   keyExtractor = (item, index) => index.toString();
 
-  scrollToBottom = (width, height) => {
+  scrollToBottomOnLayout = (event) => {
+    if (
+      this.messageListRef &&
+        event.nativeEvent.layout.height &&
+        this.state.chatMessages['main'] &&
+        this.state.chatMessages['main'].length
+    ) {
+      this.messageListRef.scrollToEnd();
+    }
+  }
+
+  scrollToBottomOnContentChange = (width, height) => {
     if (this.messageListRef && height) {
-      this.messageListRef.scrollToEnd({animated: true});
+      this.messageListRef.scrollToEnd();
     }
   }
 
@@ -172,7 +182,8 @@ export default class App extends PureComponent {
         >
           <FlatList
             ref={(ref) => this.messageListRef = ref}
-            onContentSizeChange={this.scrollToBottom}
+            onContentSizeChange={this.scrollToBottomOnContentChange}
+            onLayout={this.scrollToBottomOnLayout}
             data={this.state.chatMessages['main']}
             renderItem={this.renderItem}
             keyExtractor={this.keyExtractor}
