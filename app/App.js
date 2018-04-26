@@ -1,9 +1,59 @@
-import React from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import React, {PureComponent} from 'react';
+import {StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 
 const chatClient = chatClientFactory(WebSocket)();
-const MAIN_CHANNEL = 'main'
+const MAIN_CHANNEL = 'main';
+
+class MessageInput extends PureComponent {
+  render() {
+    return (
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: '#b2b2b2',
+        flexDirection: 'row'
+      }}>
+        <TextInput
+          style={{
+            flex: 1,
+            backgroundColor: 'white',
+            fontSize: 17,
+            marginLeft: 10,
+            marginTop: 6,
+            marginBottom: 10,
+          }}
+          multiline
+          placeholder="Type a message..."
+          value={this.props.text}
+          onChangeText={this.props.onChangeText}
+        />
+        {this.props.text.trim().length > 0 ? (
+        <TouchableOpacity
+          style={{
+            justifyContent: 'flex-start',
+          }}
+          onPress={this.props.onPressSend}
+        >
+          <Text
+            style={{
+              color: '#0084ff',
+              fontWeight: '600',
+              fontSize: 17,
+              marginTop: 10,
+              marginLeft: 10,
+              marginRight: 10,
+            }}
+          >Send</Text>
+        </TouchableOpacity>) : null}
+      </View>
+
+    )
+  }
+}
 
 export default class App extends React.Component {
   constructor(props) {
@@ -12,14 +62,15 @@ export default class App extends React.Component {
       connected: false,
       channels: [],
       chatMessages: {},
+      text: ''
     };
   }
 
   async componentDidMount() {
-    await chatClient.connect('192.168.132.40', 8881, 'donatasp', '123');
+    await chatClient.connect('192.168.132.19', 8881, 'gytis', '123');
     const channels = await chatClient.getChannels();
     this.setState({connected: true, channels});
-    chatClient.onEvent('message', this.appendMessage);
+    chatClient.onEvent('message', this.onMessageReceived);
     const messages = await chatClient.getMessages(MAIN_CHANNEL);
     this.setState({
       chatMessages: {[MAIN_CHANNEL]: messages},
@@ -27,14 +78,14 @@ export default class App extends React.Component {
   }
 
   sendMessage = async () => {
-    const msg = await chatClient.send(MAIN_CHANNEL, this.text);
+    const msg = await chatClient.send(MAIN_CHANNEL, this.state.text);
     this.appendMessage(MAIN_CHANNEL, msg);
-    this.text = '';
-  }
+    this.setState({text: ''});
+  };
 
-  changeText = (text) => {
-    this.text = text;
-  }
+  onChangeText = (text) => {
+    this.setState({text});
+  };
 
   renderHeader = () => {
     return (
@@ -43,10 +94,6 @@ export default class App extends React.Component {
           {this.state.connected ? this.renderChannels() : this.renderOffline()}
         </View>
         <View style={{flex: 1}}>
-          <TextInput style={{borderWidth: 1, borderColor: 'black', width: 200}} onChangeText={this.changeText}/>
-          <TouchableOpacity onPress={this.sendMessage}>
-            <Text>Send message</Text>
-          </TouchableOpacity>
         </View>
       </View>
     )
@@ -56,7 +103,7 @@ export default class App extends React.Component {
     return <View><Text>{item.content}</Text></View>;
   }
 
-  keyExtractor = (item, index) => index.toString()
+  keyExtractor = (item, index) => index.toString();
 
   render() {
     return (
@@ -67,11 +114,17 @@ export default class App extends React.Component {
           renderItem={this.renderItem}
           keyExtractor={this.keyExtractor}
         />
+        <MessageInput text={this.state.text} onPressSend={this.sendMessage} onChangeText={this.onChangeText}/>
       </View>
     );
   }
 
+  onMessageReceived = (message) => {
+    this.appendMessage(message.to, message);
+  };
+
   appendMessage = (channel, message) => {
+    console.log(channel, message);
     this.setState({
       chatMessages: {
         ...this.state.chatMessages,
@@ -91,9 +144,8 @@ export default class App extends React.Component {
     return (
       <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
         <Text>Connected!</Text>
-        { channels.length ?
-          channels.map((channel, i) => <View key={i}><Text>Available channels:</Text><Text>#{channel}</Text></View>) :
-          (<Text>No channels yet.</Text>)
+        {channels.length ? channels.map((channel, i) => <View key={i}><Text>Available
+          channels:</Text><Text>#{channel}</Text></View>) : (<Text>No channels yet.</Text>)
         }
       </View>
     );
