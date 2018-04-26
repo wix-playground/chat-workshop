@@ -223,6 +223,12 @@ export default class App extends PureComponent {
   };
 
   onChangeChannel = async (channel) => {
+    if (channel === this.state.currentChannel) {
+      this.setState({
+        modalVisible: false,
+      });
+      return;
+    }
     const messages = await chatClient.getMessages(channel);
     this.setState({
       chatMessages: {[channel]: messages.reverse()},
@@ -276,9 +282,9 @@ export default class App extends PureComponent {
           visible={this.state.modalVisible}
         >
           <TouchableOpacity activeOpacity={1} onPress={() => this.setState({modalVisible: false})} style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center'}}>
-            <Animatable.View duration={500} animation="fadeIn" style={{width: '80%', backgroundColor: 'white', padding: 10}}>
+            <Animatable.View duration={500} animation="fadeIn" style={{width: '80%', backgroundColor: 'white'}}>
               {this.state.channels.map(channel => (
-                <TouchableOpacity key={channel} onPress={() => this.onChangeChannel(channel)}>
+                <TouchableOpacity style={{marginHorizontal: 10, marginVertical: 5}} key={channel} onPress={() => this.onChangeChannel(channel)}>
                 <Text style={{
                   fontSize: 24,
                   fontWeight: '300'
@@ -286,7 +292,7 @@ export default class App extends PureComponent {
                 </TouchableOpacity>
               ))}
 
-              <TextInput style={{fontSize: 24}} value={this.state.newChannel} onChangeText={(newChannel) => this.setState({newChannel})} placeholder="Enter new channel name" onSubmitEditing={this.onCreateNewChannel}/>
+              <TextInput style={{padding: 3, paddingLeft: 10, borderTopColor: '#b2b2b2', borderTopWidth: StyleSheet.hairlineWidth, marginTop: 10, fontSize: 24}} value={this.state.newChannel} onChangeText={(newChannel) => this.setState({newChannel})} placeholder="Enter new channel name" onSubmitEditing={this.onCreateNewChannel}/>
 
             </Animatable.View>
           </TouchableOpacity>
