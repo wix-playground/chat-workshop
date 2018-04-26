@@ -35,7 +35,7 @@ describe('Chat Server', () => {
 
   it('should send message to channel', async () => {
     await client.send('general', 'hello yall!');
-    const messages = await chat.getMessages('general')
+    const messages = await chat.getMessages('general');
     expect(messages).toEqual([
       {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
     ]);

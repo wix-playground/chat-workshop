@@ -48,7 +48,20 @@ class ChatServer {
 
   joinChannel(session, name) {
     this.addChannel(name);
-    this.channels[name].users.push(session.name);
+    const user = session.name;
+    const chan = this.channels[name];
+    if (!chan.users.includes(user)) {
+      chan.users.push(user);
+    }
+  }
+
+  getPrimaryChannel() {
+    return this.primaryChannel;
+  }
+
+  setPrimaryChannel(name) {
+    this.primaryChannel = name;
+    this.addChannel(name);
   }
 
   addChannel(name) {
@@ -64,30 +77,35 @@ class ChatServer {
     return Object.keys(this.channels);
   }
 
-  addMessage(session, channel, message) {
+  getChannelUsers(name) {
+    return this.channels[name].users;
+  }
+
+  addMessage(session, channel, content) {
     const chan = this.channels[channel];
-    const fullMessage = {
+    const message = {
       id: uuid.v4(),
-      content: message,
+      content: content,
       timestamp: this.timeService.now(),
     };
-    chan.messages.push(fullMessage);
-    return Promise.all([
-      chan.users.map((name) => {
-        if (name !== session.name) {
-          const user = this.users[name];
-          const data = JSON.stringify([
-            'event', ['message', [{
-              ...fullMessage,
-              to: channel,
-              from: session.name,
-            }]],
-          ]);
-          return new Promise((resolve) => user.socket.send(data, {}, resolve));
-        }
-        return Promise.resolve();
-      })
-    ]).then(() => fullMessage);
+    chan.messages.push(message);
+
+    const broadcast = chan.users.map((name) => {
+      if (name !== session.name) {
+        const user = this.users[name];
+        const data = JSON.stringify([
+          'event', ['message', [{
+            ...message,
+            to: channel,
+            from: session.name,
+          }]],
+        ]);
+        return new Promise((resolve) => user.socket.send(data, {}, resolve));
+      }
+      return null;
+    });
+
+    return Promise.all(broadcast).then(() => message);
   }
 
   getMessages(channel) {
@@ -119,11 +137,17 @@ class ChatServer {
       sessionId: this.idGenerator.nextId(),
       socket: socket,
     };
-    console.log('>>> authenticated', name);
-    return {
+
+    const session = {
       sessionId: user.sessionId,
       name,
     };
+    if (this.getPrimaryChannel()) {
+      this.joinChannel(session, this.getPrimaryChannel());
+    }
+
+    console.log('>>> authenticated', name);
+    return session;
   }
 }
 

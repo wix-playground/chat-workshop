@@ -60,7 +60,48 @@ describe('Chat Server', () => {
     });
   });
 
-  describe('authenticate', () => {
+  describe('joinChannel()', () => {
+    it('should create channel if it does not exist', () => {
+      const server = driver().get();
+      server.joinChannel({}, 'a');
+      expect(server.getChannels()).toEqual(['a']);
+    });
+
+    it('should create channel twice', () => {
+      const server = driver().get();
+      server.joinChannel({}, 'a');
+      server.joinChannel({}, 'a');
+      expect(server.getChannels()).toEqual(['a']);
+    });
+
+    it('should not join same user twice', () => {
+      const server = driver().get();
+      server.joinChannel({name: 'u'}, 'a');
+      server.joinChannel({name: 'u'}, 'a');
+      expect(server.getChannelUsers('a')).toEqual(['u']);
+    });
+  });
+
+  describe('Primary Channel', () => {
+    it('should not exist by default', () => {
+      const server = driver().get();
+      expect(server.getPrimaryChannel()).toBeUndefined();
+    });
+
+    it('should create channel if it does not exist', () => {
+      const server = driver().get();
+      server.setPrimaryChannel('a');
+      expect(server.getChannels()).toEqual(['a']);
+    });
+
+    it('should know which channel is primary', () => {
+      const server = driver().get();
+      server.setPrimaryChannel('a');
+      expect(server.getPrimaryChannel()).toEqual('a');
+    });
+  });
+
+  describe('authenticate()', () => {
     it('should create new user', async () => {
       const server = driver().get();
       server.authenticate('a', 'hunter2');
@@ -83,6 +124,13 @@ describe('Chat Server', () => {
         .withUser('a', 'hunter2')
         .get();
       expect(() => server.authenticate('a', 'hunter1')).toThrow();
+    });
+
+    it('should automatically join primary channel', () => {
+      const server = driver().get();
+      server.setPrimaryChannel('main');
+      server.authenticate('pete', 'hunter2');
+      expect(server.getChannelUsers('main')).toEqual(['pete']);
     });
   });
 });
