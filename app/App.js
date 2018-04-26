@@ -7,7 +7,7 @@ const chatClient = chatClientFactory(WebSocket)();
 const MAIN_CHANNEL = 'main';
 
 const USER_NAME = 'gytis';
-
+const CURRENT_CHANNEL = 'main';
 class MessageInput extends PureComponent {
   render() {
     return (
@@ -93,12 +93,8 @@ export default class App extends PureComponent {
 
   renderHeader = () => {
     return (
-      <View style={{flex: 1}}>
-        <View style={{flex: 1}}>
+      <View>
           {this.state.connected ? this.renderChannels() : this.renderOffline()}
-        </View>
-        <View style={{flex: 1}}>
-        </View>
       </View>
     )
   };
@@ -143,9 +139,11 @@ export default class App extends PureComponent {
           backgroundColor: "#C2185B",
           height: Constants.statusBarHeight,
         }}/>
+        <View style={{backgroundColor: 'white', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
+          {this.renderHeader()}
+        </View>
         <KeyboardAvoidingView testID="welcome" style={styles.container} behavior="padding">
           <FlatList
-            ListHeaderComponent={this.renderHeader}
             data={this.state.chatMessages['main']}
             renderItem={this.renderItem}
             keyExtractor={this.keyExtractor}
@@ -162,7 +160,6 @@ export default class App extends PureComponent {
   };
 
   appendMessage = (channel, message) => {
-    console.log(channel, message);
     this.setState({
       chatMessages: {
         ...this.state.chatMessages,
@@ -180,7 +177,7 @@ export default class App extends PureComponent {
   renderChannels = () => {
     const {channels} = this.state;
     return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+      <View>
         <Text>Connected!</Text>
         {channels.length ? channels.map((channel, i) => <View key={i}><Text>Available
           channels:</Text><Text>#{channel}</Text></View>) : (<Text>No channels yet.</Text>)
