@@ -1,5 +1,5 @@
 import React, {PureComponent} from 'react';
-import {StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
+import {StyleSheet, KeyboardAvoidingView, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 
 const chatClient = chatClientFactory(WebSocket)();
@@ -9,7 +9,6 @@ class MessageInput extends PureComponent {
   render() {
     return (
       <View style={{
-        position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
@@ -27,6 +26,7 @@ class MessageInput extends PureComponent {
             marginBottom: 10,
           }}
           multiline
+          underlineColorAndroid="transparent"
           placeholder="Type a message..."
           value={this.props.text}
           onChangeText={this.props.onChangeText}
@@ -107,7 +107,7 @@ export default class App extends React.Component {
 
   render() {
     return (
-      <View testID="welcome" style={styles.container}>
+      <KeyboardAvoidingView testID="welcome" style={styles.container} behavior="padding">
         <FlatList
           ListHeaderComponent={this.renderHeader}
           data={this.state.chatMessages['main']}
@@ -115,7 +115,7 @@ export default class App extends React.Component {
           keyExtractor={this.keyExtractor}
         />
         <MessageInput text={this.state.text} onPressSend={this.sendMessage} onChangeText={this.onChangeText}/>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
