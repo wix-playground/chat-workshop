@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {DangerZone, Constants} from 'expo';
-const { Lottie } = DangerZone;
+
+const {Lottie} = DangerZone;
 
 
 const chatClient = chatClientFactory(WebSocket)();
@@ -91,7 +92,7 @@ export default class App extends PureComponent {
     chatClient.onEvent('message', this.onMessageReceived);
     const messages = await chatClient.getMessages(MAIN_CHANNEL);
     this.setState({
-      chatMessages: {[MAIN_CHANNEL]: messages},
+      chatMessages: {[MAIN_CHANNEL]: messages.reverse()},
     });
   }
 
@@ -110,7 +111,7 @@ export default class App extends PureComponent {
 
     const myMessage = item.from === USER_NAME;
 
-    const previousMessageSame = messages[index - 1] && messages[index - 1].from === item.from;
+    const previousMessageSame = messages[index + 1] && messages[index + 1].from === item.from;
 
     const showAuthor = !myMessage && !previousMessageSame;
 
@@ -119,15 +120,19 @@ export default class App extends PureComponent {
     return (
       <View>
         {showAuthor &&
-        <Text
-          style={{
-            marginTop: 18,
-            marginHorizontal: 10,
-            fontSize: 13,
-            marginBottom: 3,
-            color: '#333333'
-          }}
-        >{item.from}</Text>
+        <View>
+          <Text
+            style={{
+              marginTop: 18,
+              marginHorizontal: 10,
+              fontSize: 13,
+              marginBottom: 3,
+              color: '#333333'
+            }}
+          >
+            {item.from}
+          </Text>
+        </View>
         }
         <View
           style={{
@@ -144,7 +149,7 @@ export default class App extends PureComponent {
             shadowOpacity: 1,
             shadowColor: '#b3b3b3',
             shadowOffset: {width: 3, height: 3},
-            marginBottom: index === messages.length - 1 ? 15 : 0,
+            marginBottom: index === 0 ? 15 : 0,
           }}
         >
           <Text
@@ -166,13 +171,13 @@ export default class App extends PureComponent {
       this.state.chatMessages['main'] &&
       this.state.chatMessages['main'].length
     ) {
-      this.messageListRef.scrollToEnd();
+      this.messageListRef.scrollToOffset({offset: 0, animated: true});
     }
   };
 
   scrollToBottomOnContentChange = (width, height) => {
     if (this.messageListRef && height) {
-      this.messageListRef.scrollToEnd();
+      this.messageListRef.scrollToOffset({offset: 0, animated: true});
     }
   };
 
@@ -203,6 +208,7 @@ export default class App extends PureComponent {
           behavior={(Platform.OS === 'ios') ? 'padding' : null}
         >
           <FlatList
+            inverted
             ref={(ref) => this.messageListRef = ref}
             onContentSizeChange={this.scrollToBottomOnContentChange}
             onLayout={this.scrollToBottomOnLayout}
@@ -225,7 +231,7 @@ export default class App extends PureComponent {
     this.setState({
       chatMessages: {
         ...this.state.chatMessages,
-        [channel]: [...this.state.chatMessages[channel], message]
+        [channel]: [message, ...this.state.chatMessages[channel]]
       }
     });
   };
@@ -254,6 +260,7 @@ export default class App extends PureComponent {
               this.animation = animation;
             }}
             style={{
+              marginLeft: -7,
               width: 60,
               height: 60,
             }}
