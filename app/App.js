@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {DangerZone, Constants} from 'expo';
+import * as Animatable from 'react-native-animatable';
 
 const {Lottie} = DangerZone;
 
@@ -118,51 +119,72 @@ export default class App extends PureComponent {
     const messageMargin = myMessage ? (previousMessageSame ? 10 : 18) : previousMessageSame ? 10 : 0;
 
     return (
-      <View>
+      <Animatable.View animation="fadeIn" style={{
+        flexDirection: 'row',
+        justifyContent: myMessage ? 'flex-end' : 'flex-start',
+        marginTop: showAuthor ? 18 : 0,
+      }}>
         {showAuthor &&
-        <View>
-          <Text
+          <View style={{
+            marginLeft: 10,
+            marginTop: 4,
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#7671bc',
+          }}>
+            <Text style={{
+              fontSize: 24,
+              textAlign: 'center',
+              color: 'white'
+            }}>{item.from[0].toUpperCase()}</Text>
+          </View>
+        }
+        <View style={{
+        }}>
+          {showAuthor &&
+          <View>
+            <Text
+              style={{
+                marginHorizontal: 10,
+                fontSize: 13,
+                marginBottom: 3,
+                color: '#333333'
+              }}
+            >
+              {item.from}
+            </Text>
+          </View>
+          }
+          <View
             style={{
-              marginTop: 18,
-              marginHorizontal: 10,
-              fontSize: 13,
-              marginBottom: 3,
-              color: '#333333'
+              flex: 1,
+              backgroundColor: myMessage ? 'white' : '#7671bc',
+              padding: 8,
+              marginTop: messageMargin,
+              paddingHorizontal: 12,
+              marginHorizontal: myMessage || showAuthor ? 10 : 60,
+              justifyContent: 'center',
+              shadowRadius: 2,
+              shadowOpacity: 1,
+              shadowColor: '#b3b3b3',
+              shadowOffset: {width: 3, height: 3},
+              marginBottom: index === 0 ? 15 : 0,
             }}
           >
-            {item.from}
-          </Text>
+            <Text
+              style={{
+                color: myMessage ? 'black' : 'white'
+              }}
+            >{item.content}</Text>
+          </View>
         </View>
-        }
-        <View
-          style={{
-            flex: 1,
-            alignSelf: myMessage ? 'flex-end' : 'flex-start',
-            backgroundColor: myMessage ? 'white' : '#7671bc',
-            padding: 8,
-            marginTop: messageMargin,
-            paddingHorizontal: 12,
-            marginHorizontal: 10,
-            minWidth: 30,
-            justifyContent: 'center',
-            shadowRadius: 2,
-            shadowOpacity: 1,
-            shadowColor: '#b3b3b3',
-            shadowOffset: {width: 3, height: 3},
-            marginBottom: index === 0 ? 15 : 0,
-          }}
-        >
-          <Text
-            style={{
-              color: myMessage ? 'black' : 'white'
-            }}
-          >{item.content}</Text>
-        </View>
-      </View>
+      </Animatable.View>
     );
   };
 
-  keyExtractor = (item, index) => index.toString();
+  keyExtractor = (item, index) => item.id;
 
   scrollToBottomOnLayout = (event) => {
     if (

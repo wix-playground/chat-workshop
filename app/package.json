@@ -27,6 +27,7 @@
     "expo": "^26.0.0",
     "react": "16.3.0-alpha.1",
     "react-native": "0.54.3",
+    "react-native-animatable": "^1.2.4",
     "wix-chat-workshop-client": "^1.0.0"
   },
   "detox": {
