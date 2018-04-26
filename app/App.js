@@ -141,8 +141,7 @@ export default class App extends PureComponent {
             }}>{item.from[0].toUpperCase()}</Text>
           </View>
         }
-        <View style={{
-        }}>
+        <View>
           {showAuthor &&
           <View>
             <Text
@@ -150,7 +149,7 @@ export default class App extends PureComponent {
                 marginHorizontal: 10,
                 fontSize: 13,
                 marginBottom: 3,
-                color: '#333333'
+                color: '#333333',
               }}
             >
               {item.from}
@@ -159,18 +158,17 @@ export default class App extends PureComponent {
           }
           <View
             style={{
-              flex: 1,
               backgroundColor: myMessage ? 'white' : '#7671bc',
               padding: 8,
               marginTop: messageMargin,
               paddingHorizontal: 12,
               marginHorizontal: myMessage || showAuthor ? 10 : 60,
-              justifyContent: 'center',
               shadowRadius: 2,
               shadowOpacity: 1,
               shadowColor: '#b3b3b3',
               shadowOffset: {width: 3, height: 3},
               marginBottom: index === 0 ? 15 : 0,
+              alignSelf: 'flex-start'
             }}
           >
             <Text
@@ -237,7 +235,6 @@ export default class App extends PureComponent {
             data={this.state.chatMessages['main']}
             renderItem={this.renderItem}
             keyExtractor={this.keyExtractor}
-            style={{width: '100%'}}
           />
           <MessageInput text={this.state.text} onPressSend={this.sendMessage} onChangeText={this.onChangeText}/>
         </KeyboardAvoidingView>
