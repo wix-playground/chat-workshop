@@ -97,7 +97,7 @@ export default class App extends PureComponent {
     this.setState({text: ''});
   };
 
-  onChangeText = (text) => {
+  onChangeText = (text) => {previousMessageSame
     this.setState({text});
   };
 
@@ -109,19 +109,38 @@ export default class App extends PureComponent {
     );
   };
 
-  renderItem = ({item}) => {
+  renderItem = ({item, index}) => {
+    const messages = this.state.chatMessages['main'];
 
     const myMessage = item.from === USER_NAME;
 
+    const previousMessageSame = messages[index - 1] && messages[index - 1].from === item.from;
+
+    const showAuthor = !myMessage && !previousMessageSame;
+
+    const messageMargin = myMessage ? (previousMessageSame ? 10 : 18) : previousMessageSame ? 10 : 0;
+
     return (
+      <View>
+        {showAuthor &&
+          <Text
+            style={{
+              marginTop: 18,
+              marginHorizontal: 10,
+              fontSize: 13,
+              marginBottom: 3,
+              color: '#333333'
+            }}
+          >{item.from}</Text>
+        }
       <View
         style={{
           flex: 1,
           alignSelf: myMessage ? 'flex-end' : 'flex-start',
           backgroundColor: myMessage ? 'white' : '#C2185B',
           padding: 8,
+          marginTop: messageMargin,
           paddingHorizontal: 12,
-          marginBottom: 18,
           marginHorizontal: 10,
           minWidth: 30,
           justifyContent: 'center',
@@ -136,6 +155,7 @@ export default class App extends PureComponent {
             color: myMessage ? 'black' : 'white'
           }}
         >{item.content}</Text>
+      </View>
       </View>
     );
   };
@@ -172,7 +192,7 @@ export default class App extends PureComponent {
           }}/>
           : null}
         <View
-          style={{backgroundColor: 'white', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
+          style={{backgroundColor: 'white', height: 60, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
           {this.renderHeader()}
         </View>
         <KeyboardAvoidingView
