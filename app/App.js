@@ -11,7 +11,9 @@ import {
   FlatList
 } from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
-import {Constants} from 'expo';
+import {DangerZone, Constants} from 'expo';
+const { Lottie } = DangerZone;
+
 
 const chatClient = chatClientFactory(WebSocket)();
 const MAIN_CHANNEL = 'main';
@@ -84,6 +86,8 @@ export default class App extends PureComponent {
     await chatClient.connect('192.168.132.19', 8881, USER_NAME, '123');
     const channels = await chatClient.getChannels();
     this.setState({connected: true, channels});
+    this.animation.reset();
+    this.animation.play();
     chatClient.onEvent('message', this.onMessageReceived);
     const messages = await chatClient.getMessages(MAIN_CHANNEL);
     this.setState({
@@ -97,16 +101,8 @@ export default class App extends PureComponent {
     this.setState({text: ''});
   };
 
-  onChangeText = (text) => {previousMessageSame
+  onChangeText = (text) => {
     this.setState({text});
-  };
-
-  renderHeader = () => {
-    return (
-      <View>
-        {this.state.connected ? this.renderChannels() : this.renderOffline()}
-      </View>
-    );
   };
 
   renderItem = ({item, index}) => {
@@ -123,39 +119,40 @@ export default class App extends PureComponent {
     return (
       <View>
         {showAuthor &&
-          <Text
-            style={{
-              marginTop: 18,
-              marginHorizontal: 10,
-              fontSize: 13,
-              marginBottom: 3,
-              color: '#333333'
-            }}
-          >{item.from}</Text>
-        }
-      <View
-        style={{
-          flex: 1,
-          alignSelf: myMessage ? 'flex-end' : 'flex-start',
-          backgroundColor: myMessage ? 'white' : '#C2185B',
-          padding: 8,
-          marginTop: messageMargin,
-          paddingHorizontal: 12,
-          marginHorizontal: 10,
-          minWidth: 30,
-          justifyContent: 'center',
-          shadowRadius: 2,
-          shadowOpacity: 1,
-          shadowColor: '#b3b3b3',
-          shadowOffset: {width: 3, height: 3},
-        }}
-      >
         <Text
           style={{
-            color: myMessage ? 'black' : 'white'
+            marginTop: 18,
+            marginHorizontal: 10,
+            fontSize: 13,
+            marginBottom: 3,
+            color: '#333333'
           }}
-        >{item.content}</Text>
-      </View>
+        >{item.from}</Text>
+        }
+        <View
+          style={{
+            flex: 1,
+            alignSelf: myMessage ? 'flex-end' : 'flex-start',
+            backgroundColor: myMessage ? 'white' : '#7671bc',
+            padding: 8,
+            marginTop: messageMargin,
+            paddingHorizontal: 12,
+            marginHorizontal: 10,
+            minWidth: 30,
+            justifyContent: 'center',
+            shadowRadius: 2,
+            shadowOpacity: 1,
+            shadowColor: '#b3b3b3',
+            shadowOffset: {width: 3, height: 3},
+            marginBottom: index === messages.length - 1 ? 15 : 0,
+          }}
+        >
+          <Text
+            style={{
+              color: myMessage ? 'black' : 'white'
+            }}
+          >{item.content}</Text>
+        </View>
       </View>
     );
   };
@@ -165,19 +162,19 @@ export default class App extends PureComponent {
   scrollToBottomOnLayout = (event) => {
     if (
       this.messageListRef &&
-        event.nativeEvent.layout.height &&
-        this.state.chatMessages['main'] &&
-        this.state.chatMessages['main'].length
+      event.nativeEvent.layout.height &&
+      this.state.chatMessages['main'] &&
+      this.state.chatMessages['main'].length
     ) {
       this.messageListRef.scrollToEnd();
     }
-  }
+  };
 
   scrollToBottomOnContentChange = (width, height) => {
     if (this.messageListRef && height) {
       this.messageListRef.scrollToEnd();
     }
-  }
+  };
 
   render() {
     return (
@@ -187,13 +184,18 @@ export default class App extends PureComponent {
           backgroundColor="#C2185B"
         />
         {Platform.OS === 'ios' ? <View style={{
-            backgroundColor: "#C2185B",
+            backgroundColor: "#7671bc",
             height: Constants.statusBarHeight,
           }}/>
           : null}
         <View
-          style={{backgroundColor: 'white', height: 60, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
-          {this.renderHeader()}
+          style={{
+            backgroundColor: 'white',
+            height: 60,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: '#b2b2b2'
+          }}>
+          {this.state.connected ? this.renderChannels() : this.renderOffline()}
         </View>
         <KeyboardAvoidingView
           testID="welcome"
@@ -237,11 +239,28 @@ export default class App extends PureComponent {
   renderChannels = () => {
     const {channels} = this.state;
     return (
-      <View>
-        <Text>Connected!</Text>
-        {channels.length ? channels.map((channel, i) => <View key={i}><Text>Available
-          channels:</Text><Text>#{channel}</Text></View>) : (<Text>No channels yet.</Text>)
-        }
+      <View style={{flexDirection: 'row'}}>
+        <View>
+          <Text style={{
+            marginLeft: 10,
+            marginTop: 6,
+            fontSize: 36,
+            fontWeight: '200'
+          }}>#{CURRENT_CHANNEL}</Text>
+        </View>
+        <View>
+          <Lottie
+            ref={animation => {
+              this.animation = animation;
+            }}
+            style={{
+              width: 60,
+              height: 60,
+            }}
+            loop={false}
+            source={require('./checked_done.json')}
+          />
+        </View>
       </View>
     );
   };
