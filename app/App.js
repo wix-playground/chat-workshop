@@ -1,5 +1,5 @@
 import React, {PureComponent} from 'react';
-import {StyleSheet, KeyboardAvoidingView, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
+import {StyleSheet, StatusBar, KeyboardAvoidingView, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {Constants} from 'expo';
 
@@ -135,6 +135,9 @@ export default class App extends PureComponent {
   render() {
     return (
       <View style={{flex: 1, backgroundColor: '#e9e9e9'}}>
+        <StatusBar
+          barStyle="light-content"
+        />
         <View style={{
           backgroundColor: "#C2185B",
           height: Constants.statusBarHeight,
