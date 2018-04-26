@@ -8,7 +8,8 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  FlatList
+  FlatList,
+  Modal
 } from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {DangerZone, Constants} from 'expo';
@@ -18,10 +19,8 @@ const {Lottie} = DangerZone;
 
 
 const chatClient = chatClientFactory(WebSocket)();
-const MAIN_CHANNEL = 'main';
 
 const USER_NAME = 'gytis';
-const CURRENT_CHANNEL = 'main';
 
 class MessageInput extends PureComponent {
   render() {
@@ -79,8 +78,11 @@ export default class App extends PureComponent {
     this.state = {
       connected: false,
       channels: [],
-      chatMessages: {[MAIN_CHANNEL]: []},
-      text: ''
+      currentChannel: 'main',
+      chatMessages: {main: []},
+      text: '',
+      newChannel: '',
+      modalVisible: false,
     };
   }
 
@@ -91,15 +93,15 @@ export default class App extends PureComponent {
     this.animation.reset();
     this.animation.play();
     chatClient.onEvent('message', this.onMessageReceived);
-    const messages = await chatClient.getMessages(MAIN_CHANNEL);
+    const messages = await chatClient.getMessages(this.state.currentChannel);
     this.setState({
-      chatMessages: {[MAIN_CHANNEL]: messages.reverse()},
+      chatMessages: {[this.state.currentChannel]: messages.reverse()},
     });
   }
 
   sendMessage = async () => {
-    const msg = await chatClient.send(MAIN_CHANNEL, this.state.text.trim());
-    this.appendMessage(MAIN_CHANNEL, msg);
+    const msg = await chatClient.send(this.state.currentChannel, this.state.text.trim());
+    this.appendMessage(this.state.currentChannel, msg);
     this.setState({text: ''});
   };
 
@@ -108,7 +110,7 @@ export default class App extends PureComponent {
   };
 
   renderItem = ({item, index}) => {
-    const messages = this.state.chatMessages['main'];
+    const messages = this.state.chatMessages[this.state.currentChannel];
 
     const myMessage = item.from === USER_NAME;
 
@@ -125,21 +127,21 @@ export default class App extends PureComponent {
         marginTop: showAuthor ? 18 : 0,
       }}>
         {showAuthor &&
-          <View style={{
-            marginLeft: 10,
-            marginTop: 4,
-            width: 40,
-            height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#7671bc',
-          }}>
-            <Text style={{
-              fontSize: 24,
-              textAlign: 'center',
-              color: 'white'
-            }}>{item.from[0].toUpperCase()}</Text>
-          </View>
+        <View style={{
+          marginLeft: 10,
+          marginTop: 4,
+          width: 40,
+          height: 40,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#7671bc',
+        }}>
+          <Text style={{
+            fontSize: 24,
+            textAlign: 'center',
+            color: 'white'
+          }}>{item.from[0].toUpperCase()}</Text>
+        </View>
         }
         <View>
           {showAuthor &&
@@ -188,8 +190,8 @@ export default class App extends PureComponent {
     if (
       this.messageListRef &&
       event.nativeEvent.layout.height &&
-      this.state.chatMessages['main'] &&
-      this.state.chatMessages['main'].length
+      this.state.chatMessages[this.state.currentChannel] &&
+      this.state.chatMessages[this.state.currentChannel].length
     ) {
       this.messageListRef.scrollToOffset({offset: 0, animated: true});
     }
@@ -199,6 +201,37 @@ export default class App extends PureComponent {
     if (this.messageListRef && height) {
       this.messageListRef.scrollToOffset({offset: 0, animated: true});
     }
+  };
+
+  onCreateNewChannel = async () => {
+    const channel = this.state.newChannel;
+    await chatClient.join(channel);
+
+    this.setState({
+      newChannel: '',
+      modalVisible: false,
+      currentChannel: channel
+    });
+
+
+    const channels = await chatClient.getChannels();
+    this.setState({channels});
+    const messages = await chatClient.getMessages(channel);
+    this.setState({
+      chatMessages: {[channel]: messages.reverse()},
+    });
+  };
+
+  onChangeChannel = async (channel) => {
+    const messages = await chatClient.getMessages(channel);
+    this.setState({
+      chatMessages: {[channel]: messages.reverse()},
+    });
+
+    this.setState({
+      modalVisible: false,
+      currentChannel: channel
+    });
   };
 
   render() {
@@ -232,12 +265,32 @@ export default class App extends PureComponent {
             ref={(ref) => this.messageListRef = ref}
             onContentSizeChange={this.scrollToBottomOnContentChange}
             onLayout={this.scrollToBottomOnLayout}
-            data={this.state.chatMessages['main']}
+            data={this.state.chatMessages[this.state.currentChannel]}
             renderItem={this.renderItem}
             keyExtractor={this.keyExtractor}
           />
           <MessageInput text={this.state.text} onPressSend={this.sendMessage} onChangeText={this.onChangeText}/>
         </KeyboardAvoidingView>
+        <Modal
+          transparent={true}
+          visible={this.state.modalVisible}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={() => this.setState({modalVisible: false})} style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center'}}>
+            <Animatable.View duration={500} animation="fadeIn" style={{width: '80%', backgroundColor: 'white', padding: 10}}>
+              {this.state.channels.map(channel => (
+                <TouchableOpacity key={channel} onPress={() => this.onChangeChannel(channel)}>
+                <Text style={{
+                  fontSize: 24,
+                  fontWeight: '300'
+                }}>#{channel}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TextInput style={{fontSize: 24}} value={this.state.newChannel} onChangeText={(newChannel) => this.setState({newChannel})} placeholder="Enter new channel name" onSubmitEditing={this.onCreateNewChannel}/>
+
+            </Animatable.View>
+          </TouchableOpacity>
+        </Modal>
       </View>
     );
   }
@@ -262,26 +315,26 @@ export default class App extends PureComponent {
   };
 
   renderChannels = () => {
-    const {channels} = this.state;
     return (
-      <View style={{flexDirection: 'row'}}>
-        <View>
+      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <TouchableOpacity onPress={() => {this.setState({modalVisible: true})}}>
           <Text style={{
             marginLeft: 10,
             marginTop: 6,
             fontSize: 36,
             fontWeight: '200'
-          }}>#{CURRENT_CHANNEL}</Text>
-        </View>
+          }}>#{this.state.currentChannel}</Text>
+        </TouchableOpacity>
         <View>
           <Lottie
             ref={animation => {
               this.animation = animation;
             }}
             style={{
-              marginLeft: -7,
-              width: 60,
-              height: 60,
+              marginTop: -4,
+              width: 80,
+              marginRight: -10,
+              height: 80,
             }}
             loop={false}
             source={require('./checked_done.json')}
