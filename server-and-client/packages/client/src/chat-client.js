@@ -6,12 +6,16 @@ function chatClientFactory(WebSocket) {
   return function chatClient() {
     let client;
     let session;
+    let name;
 
     return {
-      async connect(host, port, name, password) {
+      async connect(host, port, _name, password) {
         client = webSocketClient(`ws://${host}:${port}`);
         await client.connect();
-        session = await client.send('auth', name, password);
+        session = await client.send('auth', name = _name, password);
+      },
+      getName() {
+        return name;
       },
       getChannels() {
         return client.send('channels');

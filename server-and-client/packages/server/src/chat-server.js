@@ -82,8 +82,10 @@ class ChatServer {
   }
 
   addMessage(session, channel, content) {
+    const from = session.name;
     const chan = this.channels[channel];
     const message = {
+      from,
       id: uuid.v4(),
       content: content,
       timestamp: this.timeService.now(),
@@ -91,13 +93,13 @@ class ChatServer {
     chan.messages.push(message);
 
     const broadcast = chan.users.map((name) => {
-      if (name !== session.name) {
+      if (name !== from) {
         const user = this.users[name];
         const data = JSON.stringify([
           'event', ['message', [{
             ...message,
             to: channel,
-            from: session.name,
+            from,
           }]],
         ]);
         return new Promise((resolve) => user.socket.send(data, {}, resolve));

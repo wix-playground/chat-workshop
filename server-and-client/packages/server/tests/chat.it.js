@@ -37,22 +37,23 @@ describe('Chat Server', () => {
     await client.send('general', 'hello yall!');
     const messages = await chat.getMessages('general');
     expect(messages).toEqual([
-      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
-    ]);
-  });
-
-  it('should get messages from a channel', async () => {
-    await client.send('general', 'hello yall!');
-    expect(await client.getMessages('general')).toEqual([
-      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
+      {
+        from: client.getName(),
+        timestamp: expect.any(Number),
+        content: 'hello yall!',
+        id: expect.any(String)
+      }
     ]);
   });
 
   it('should get message with timestamp as a response of sending one', async () => {
     const message = await client.send('general', 'hello yall!');
-    expect(message).toEqual(
-      {timestamp: expect.any(Number), content: 'hello yall!', id: expect.any(String)}
-    );
+    expect(message).toEqual({
+      from: client.getName(),
+      timestamp: expect.any(Number),
+      content: 'hello yall!',
+      id: expect.any(String)
+    });
   });
 
   it('should not allow to connect with wrong password', async () => {
@@ -75,9 +76,6 @@ describe('Chat Server', () => {
     await client.send('general', 'yello!');
     const another = await unauthenticatedClient();
     await expect(another.getMessages('general')).rejects.toEqual(expect.objectContaining(new PermissionError()));
-    expect(await client.getMessages('general')).toEqual([
-      {timestamp: expect.any(Number), content: 'yello!', id: expect.any(String)}
-    ]);
   });
 
   it('should broadcast messsage to another client in same chat', async () => {

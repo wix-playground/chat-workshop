@@ -9,9 +9,9 @@ describe('Chat Server', () => {
         .withChannel('a')
         .get();
 
-      server.addMessage({}, 'a', 'hi');
+      server.addMessage({name: 'anon'}, 'a', 'hi');
       expect(server.getMessages('a')).toEqual([
-        {content: 'hi', timestamp, id: expect.any(String)}
+        {from: 'anon', content: 'hi', timestamp, id: expect.any(String)}
       ]);
     });
   });
