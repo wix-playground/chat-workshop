@@ -1,5 +1,15 @@
 import React, {PureComponent} from 'react';
-import {StyleSheet, StatusBar, KeyboardAvoidingView, Text, View, TextInput, TouchableOpacity, FlatList} from 'react-native';
+import {
+  StyleSheet,
+  Platform,
+  StatusBar,
+  KeyboardAvoidingView,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  FlatList
+} from 'react-native';
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {Constants} from 'expo';
 
@@ -8,6 +18,7 @@ const MAIN_CHANNEL = 'main';
 
 const USER_NAME = 'gytis';
 const CURRENT_CHANNEL = 'main';
+
 class MessageInput extends PureComponent {
   render() {
     return (
@@ -94,7 +105,7 @@ export default class App extends PureComponent {
   renderHeader = () => {
     return (
       <View>
-          {this.state.connected ? this.renderChannels() : this.renderOffline()}
+        {this.state.connected ? this.renderChannels() : this.renderOffline()}
       </View>
     )
   };
@@ -137,15 +148,22 @@ export default class App extends PureComponent {
       <View style={{flex: 1, backgroundColor: '#e9e9e9'}}>
         <StatusBar
           barStyle="light-content"
+          backgroundColor="#C2185B"
         />
-        <View style={{
-          backgroundColor: "#C2185B",
-          height: Constants.statusBarHeight,
-        }}/>
-        <View style={{backgroundColor: 'white', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
+        {Platform.OS === 'ios' ? <View style={{
+            backgroundColor: "#C2185B",
+            height: Constants.statusBarHeight,
+          }}/>
+          : null}
+        <View
+          style={{backgroundColor: 'white', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#b2b2b2'}}>
           {this.renderHeader()}
         </View>
-        <KeyboardAvoidingView testID="welcome" style={styles.container} behavior="padding">
+        <KeyboardAvoidingView
+          testID="welcome"
+          style={styles.container}
+          behavior={(Platform.OS === 'ios') ? 'padding' : null}
+        >
           <FlatList
             data={this.state.chatMessages['main']}
             renderItem={this.renderItem}
