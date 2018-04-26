@@ -107,7 +107,7 @@ export default class App extends PureComponent {
       <View>
         {this.state.connected ? this.renderChannels() : this.renderOffline()}
       </View>
-    )
+    );
   };
 
   renderItem = ({item}) => {
@@ -143,6 +143,12 @@ export default class App extends PureComponent {
 
   keyExtractor = (item, index) => index.toString();
 
+  scrollToBottom = (width, height) => {
+    if (this.messageListRef && height) {
+      this.messageListRef.scrollToEnd({animated: true});
+    }
+  }
+
   render() {
     return (
       <View style={{flex: 1, backgroundColor: '#e9e9e9'}}>
@@ -165,6 +171,8 @@ export default class App extends PureComponent {
           behavior={(Platform.OS === 'ios') ? 'padding' : null}
         >
           <FlatList
+            ref={(ref) => this.messageListRef = ref}
+            onContentSizeChange={this.scrollToBottom}
             data={this.state.chatMessages['main']}
             renderItem={this.renderItem}
             keyExtractor={this.keyExtractor}
