@@ -7,6 +7,9 @@
     "start": "node src/run",
     "test": "jest tests/ src/"
   },
+  "engines": {
+    "node": "8.9.1"
+  },
   "author": "Martynas Bardauskas <martynasb@wix.com>",
   "license": "MIT",
   "dependencies": {
