@@ -2,16 +2,18 @@ const chatServer = require('./chat-server');
 
 describe('Chat Server', () => {
   describe('addMessage()', () => {
-    it('should add message with timestamp', () => {
-      let timestamp = Math.random();
+    it('should add message with timestamp and id', () => {
+      const timestamp = Math.random();
+      const id = Math.random();
       const server = driver()
         .withTimeService({now: () => timestamp})
+        .withIdGenerator({nextId: () => id})
         .withChannel('a')
         .get();
 
-      server.addMessage({name: 'anon'}, 'a', 'hi');
+      server.addMessage('anon', 'a', 'hi');
       expect(server.getMessages('a')).toEqual([
-        {from: 'anon', content: 'hi', timestamp, id: expect.any(String)}
+        {from: 'anon', content: 'hi', timestamp, id}
       ]);
     });
   });
@@ -24,15 +26,13 @@ describe('Chat Server', () => {
     });
 
     it('should not replace existing channel', () => {
-      let timestamp = Math.random();
       const server = driver()
-        .withTimeService({now: () => timestamp})
         .withChannel('a', ['hi'])
         .get();
 
       server.addChannel('a');
       expect(server.getMessages('a')).toEqual([
-        {content: 'hi', timestamp, id: expect.any(String)}
+        expect.objectContaining({content: 'hi'})
       ]);
     });
   });
@@ -63,21 +63,21 @@ describe('Chat Server', () => {
   describe('joinChannel()', () => {
     it('should create channel if it does not exist', () => {
       const server = driver().get();
-      server.joinChannel({}, 'a');
+      server.joinChannel('u', 'a');
       expect(server.getChannels()).toEqual(['a']);
     });
 
-    it('should create channel twice', () => {
+    it('should not create channel twice', () => {
       const server = driver().get();
-      server.joinChannel({}, 'a');
-      server.joinChannel({}, 'a');
+      server.joinChannel('u', 'a');
+      server.joinChannel('u', 'a');
       expect(server.getChannels()).toEqual(['a']);
     });
 
     it('should not join same user twice', () => {
       const server = driver().get();
-      server.joinChannel({name: 'u'}, 'a');
-      server.joinChannel({name: 'u'}, 'a');
+      server.joinChannel('u', 'a');
+      server.joinChannel('u', 'a');
       expect(server.getChannelUsers('a')).toEqual(['u']);
     });
   });
@@ -135,6 +135,10 @@ describe('Chat Server', () => {
   });
 });
 
+function randomInt() {
+  return Math.random() * Math.MAX_INT;
+}
+
 function driver() {
   let timeService = {now: () => 1};
   let idGenerator = {nextId: () => 1};
@@ -162,7 +166,7 @@ function driver() {
       const server = chatServer({timeService, idGenerator})();
       Object.keys(channels).forEach((name) => {
         server.addChannel(name);
-        channels[name].forEach((message) => server.addMessage({}, name, message));
+        channels[name].forEach((message) => server.addMessage(undefined, name, message));
       });
       Object.keys(users).forEach((name) => {
         server.addUser(name, users[name]);
