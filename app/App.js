@@ -16,6 +16,7 @@ import {DangerZone, Constants} from 'expo';
 import * as Animatable from 'react-native-animatable';
 import MessageInput from './components/message-input';
 import ChatMessage from './components/chat-message';
+import {WS_HOST, WS_PORT} from './config'
 
 const {Lottie} = DangerZone;
 
@@ -39,7 +40,7 @@ export default class App extends PureComponent {
   }
 
   async componentDidMount() {
-    await chatClient.connect('powerful-oasis-26116.herokuapp.com', 80, USER_NAME, '123');
+    await chatClient.connect(WS_HOST, WS_PORT, USER_NAME, '123');
     const channels = await chatClient.getChannels();
     this.setState({connected: true, channels});
     this.animation.reset();

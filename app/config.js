@@ -1,4 +1,4 @@
 module.exports = {
-  WS_HOST: '192.168.132.40',
-  WS_PORT: 8881
+  WS_HOST: 'powerful-oasis-26116.herokuapp.com',
+  WS_PORT: 80,
 }
