@@ -14,6 +14,7 @@ import {
 import {chatClientFactory} from 'wix-chat-workshop-client';
 import {DangerZone, Constants} from 'expo';
 import * as Animatable from 'react-native-animatable';
+import MessageInput from './components/message-input';
 
 const {Lottie} = DangerZone;
 
@@ -21,56 +22,6 @@ const {Lottie} = DangerZone;
 const chatClient = chatClientFactory(WebSocket)();
 
 const USER_NAME = 'gytis';
-
-class MessageInput extends PureComponent {
-  render() {
-    return (
-      <View style={{
-        bottom: 0,
-        left: 0,
-        right: 0,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: '#b2b2b2',
-        flexDirection: 'row',
-        backgroundColor: 'white'
-      }}>
-        <TextInput
-          style={{
-            flex: 1,
-            backgroundColor: 'white',
-            fontSize: 17,
-            marginLeft: 10,
-            marginTop: 6,
-            marginBottom: 10,
-          }}
-          multiline
-          underlineColorAndroid="transparent"
-          placeholder="Type a message..."
-          value={this.props.text}
-          onChangeText={this.props.onChangeText}
-        />
-        {this.props.text.trim().length > 0 ? (
-          <TouchableOpacity
-            style={{
-              justifyContent: 'flex-start',
-            }}
-            onPress={this.props.onPressSend}
-          >
-            <Text
-              style={{
-                color: '#0084ff',
-                fontWeight: '600',
-                fontSize: 17,
-                marginTop: 10,
-                marginLeft: 10,
-                marginRight: 10,
-              }}
-            >Send</Text>
-          </TouchableOpacity>) : null}
-      </View>
-    );
-  }
-}
 
 export default class App extends PureComponent {
   constructor(props) {
