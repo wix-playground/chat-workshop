@@ -94,7 +94,7 @@ describe('WebSocket Server', () => {
 });
 
 async function createServer(handlers = {}) {
-  server = serverFactory.create(port);
+  server = serverFactory()(port);
   server.setHandlers(handlers);
   await server.start();
   return server;

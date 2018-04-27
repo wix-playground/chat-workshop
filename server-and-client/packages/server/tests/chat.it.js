@@ -2,6 +2,7 @@ const {chatClientFactory} = require('wix-chat-workshop-client');
 const WebSocket = require('isomorphic-ws');
 
 const chatServer = require('../src/chat-server');
+const storageFactory = require('../src/storage');
 const {AuthError, PermissionError} = require('../src/errors');
 
 const chatClient = chatClientFactory(WebSocket);
@@ -9,11 +10,14 @@ const chatClient = chatClientFactory(WebSocket);
 describe('Chat Server', () => {
   let chat;
   let client;
+  let storage;
 
   beforeEach(async () => {
-    chat = chatServer()(3210);
-    chat.addChannel('general');
-    chat.addUser('zucceberg', 'hunter2');
+    storage = storageFactory()();
+    storage.addUser('zucceberg', 'hunter2');
+
+    chat = chatServer({storage})(3210);
+    chat.joinChannel('zucceberg', 'general');
 
     client = chatClient();
     await chat.start();
@@ -79,9 +83,9 @@ describe('Chat Server', () => {
   });
 
   it('should broadcast messsage to another client in same chat', async () => {
-    chat.addUser('eric', 'googel');
-    chat.addUser('sergey', 'ilikelary');
-    chat.addUser('lary', 'ilikeeric');
+    storage.addUser('eric', 'googel');
+    storage.addUser('sergey', 'ilikelary');
+    storage.addUser('lary', 'ilikeeric');
     const onEricEvent = jest.fn();
     const onLaryEvent = jest.fn();
     const onSergeyEvent = jest.fn();

@@ -1,83 +1,17 @@
+const uuid = require('uuid');
 const webSocketServer = require('./server');
 const {AuthError, PermissionError} = require('./errors');
-const uuid = require('uuid');
-
-class Storage {
-  constructor(idGenerator, timeService) {
-    this.idGenerator = idGenerator;
-    this.timeService = timeService;
-    this.channels = {};
-    this.users = {};
-    this.primaryChannel = undefined;
-  }
-
-  getUsers() {
-    return this.users;
-  }
-
-  getUser(name) {
-    return this.users[name];
-  }
-
-  addUser(name, password, sessionId) {
-    return this.users[name] = {password, sessionId};
-  }
-
-  getChannels() {
-    return this.channels;
-  }
-
-  getChannel(name) {
-    return this.channels[name];
-  }
-
-  getChannelUsers(name) {
-    return this.getChannel(name).users;
-  }
-
-  getChannelMessages(name) {
-    return this.getChannel(name).messages;
-  }
-
-  addChannelUser(channelName, userName) {
-    return this.getChannel(channelName).users.push(userName);
-  }
-
-  addChannel(name) {
-    return this.channels[name] = {
-      messages: [],
-      users: [],
-    };
-  }
-
-  addChannelMessage(channelName, userName, content) {
-    const channel = this.getChannel(channelName);
-    const message = {
-      from: userName,
-      id: this.idGenerator.nextId(),
-      content: content,
-      timestamp: this.timeService.now(),
-    };
-    channel.messages.push(message);
-    return message;
-  }
-
-  setPrimaryChannel(name) {
-    this.primaryChannel = name;
-  }
-
-  getPrimaryChannel() {
-    return this.primaryChannel;
-  }
-}
+const {defaultLogger, defaultIdGenerator, defaultTimeService} = require('./defaults');
+const storageFactory = require('./storage');
 
 class ChatServer {
-  constructor(port, timeService, idGenerator) {
+  constructor(port, storage, timeService, idGenerator, logger) {
     this.port = port;
     this.idGenerator = idGenerator;
+    this.logger = logger;
+    this.storage = storage;
 
-    this.wss = webSocketServer.create(port);
-    this.storage = new Storage(idGenerator, timeService);
+    this.wss = webSocketServer({logger})(port);
     this.sockets = {};
 
     this.authorized = this.authorized.bind(this);
@@ -85,7 +19,7 @@ class ChatServer {
 
     this.wss.setHandlers({
       auth: this.authenticate,
-      channels: this.getChannels.bind(this),
+      channels: () => this.storage.getChannels(),
       join: this.authorized(
         (session, channelName) =>
           this.joinChannel(session.name, channelName)
@@ -115,12 +49,14 @@ class ChatServer {
 
   authorized(fn) {
     const storage = this.storage;
+    const logger = this.logger;
     return function (session) {
       const {name, sessionId} = session || {};
       const user = storage.getUser(name);
       if (user && user.sessionId === sessionId) {
         return fn.apply(null, arguments);
       } else {
+        logger.log(`forbidden user "${name}"`);
         throw new PermissionError();
       }
     };
@@ -138,10 +74,12 @@ class ChatServer {
 
     const session = {sessionId, name};
 
-    if (this.getPrimaryChannel()) {
-      this.joinChannel(name, this.getPrimaryChannel());
+    const primary = this.storage.getPrimaryChannel();
+    if (primary) {
+      this.joinChannel(name, primary);
     }
 
+    this.logger.log('authenticated', name);
     return session;
   }
 
@@ -153,23 +91,16 @@ class ChatServer {
     }
   }
 
-  getPrimaryChannel() {
-    return this.storage.getPrimaryChannel();
-  }
-
   setPrimaryChannel(name) {
     this.storage.setPrimaryChannel(name);
     this.addChannel(name);
   }
 
   addChannel(name) {
-    if (!this.storage.getChannel(name)) {
+    if (!this.storage.hasChannel(name)) {
+      this.logger.log(`new channel: ${name}`);
       this.storage.addChannel(name);
     }
-  }
-
-  getChannels() {
-    return Object.keys(this.storage.getChannels());
   }
 
   getChannelUsers(name) {
@@ -180,6 +111,7 @@ class ChatServer {
     const from = userName;
     const message = this.storage.addChannelMessage(channelName, from, content);
     const others = this.storage.getChannelUsers(channelName).filter((name) => name !== from);
+    this.logger.log(`${userName} => ${channelName}: ${content}`);
     const broadcast = others.map((name) => {
       const socket = this.sockets[name];
       const data = JSON.stringify([
@@ -196,26 +128,14 @@ class ChatServer {
   getMessages(channel) {
     return this.storage.getChannelMessages(channel);
   }
-
-  addUser(name, password) {
-    const user = this.storage.getUser(name);
-    if (user) {
-      throw new Error(`User "${name}" already exists`);
-    }
-    this.storage.addUser(name, password);
-  }
-
-  getUsers() {
-    return Object.keys(this.storage.getUsers());
-  }
 }
 
-const defaults = {
-  timeService: Date,
-  idGenerator: {nextId: () => uuid.v4()},
-};
-
 module.exports =
-  ({timeService, idGenerator} = defaults) =>
+  ({
+    timeService = defaultTimeService,
+    idGenerator = defaultIdGenerator,
+    logger = defaultLogger,
+    storage = storageFactory({defaultTimeService, defaultIdGenerator})()
+  } = {}) =>
   (port = 8080) =>
-  new ChatServer(port, timeService, idGenerator);
+  new ChatServer(port, storage, timeService, idGenerator, logger);

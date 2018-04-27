@@ -1,11 +1,12 @@
 const chatServer = require('./chat-server');
+const storageDriver = require('./storage.driver');
 
 describe('Chat Server', () => {
   describe('addMessage()', () => {
     it('should add message with timestamp and id', () => {
       const timestamp = Math.random();
       const id = Math.random();
-      const server = driver()
+      const server = serverDriver()
         .withTimeService({now: () => timestamp})
         .withIdGenerator({nextId: () => id})
         .withChannel('a')
@@ -20,13 +21,14 @@ describe('Chat Server', () => {
 
   describe('addChannel()', () => {
     it('should not duplicate channels', () => {
-      const server = driver().withChannel('a').get();
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).withChannel('a').get();
       server.addChannel('a');
-      expect(server.getChannels()).toEqual(['a']);
+      expect(storage.getChannels()).toEqual(['a']);
     });
 
     it('should not replace existing channel', () => {
-      const server = driver()
+      const server = serverDriver()
         .withChannel('a', ['hi'])
         .get();
 
@@ -37,45 +39,24 @@ describe('Chat Server', () => {
     });
   });
 
-  describe('addUser()', () => {
-    it('should create new user', () => {
-      const server = driver().get();
-      server.addUser('a');
-      expect(server.getUsers()).toEqual(['a']);
-    });
-
-    it('should add more than one user', () => {
-      const server = driver().get();
-      server.addUser('a');
-      server.addUser('b');
-      server.addUser('c');
-      expect(server.getUsers()).toEqual(['a', 'b', 'c']);
-    });
-
-    it('should not allow to add existing user', () => {
-      const server = driver().get();
-      server.addUser('a');
-      expect(() => server.addUser('a')).toThrow();
-      expect(server.getUsers()).toEqual(['a']);
-    });
-  });
-
   describe('joinChannel()', () => {
     it('should create channel if it does not exist', () => {
-      const server = driver().get();
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).get();
       server.joinChannel('u', 'a');
-      expect(server.getChannels()).toEqual(['a']);
+      expect(storage.getChannels()).toEqual(['a']);
     });
 
     it('should not create channel twice', () => {
-      const server = driver().get();
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).get();
       server.joinChannel('u', 'a');
       server.joinChannel('u', 'a');
-      expect(server.getChannels()).toEqual(['a']);
+      expect(storage.getChannels()).toEqual(['a']);
     });
 
     it('should not join same user twice', () => {
-      const server = driver().get();
+      const server = serverDriver().get();
       server.joinChannel('u', 'a');
       server.joinChannel('u', 'a');
       expect(server.getChannelUsers('a')).toEqual(['u']);
@@ -83,34 +64,31 @@ describe('Chat Server', () => {
   });
 
   describe('Primary Channel', () => {
-    it('should not exist by default', () => {
-      const server = driver().get();
-      expect(server.getPrimaryChannel()).toBeUndefined();
+    it('should not set by default', () => {
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).get();
+      expect(storage.getPrimaryChannel()).toBeUndefined();
     });
 
     it('should create channel if it does not exist', () => {
-      const server = driver().get();
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).get();
       server.setPrimaryChannel('a');
-      expect(server.getChannels()).toEqual(['a']);
-    });
-
-    it('should know which channel is primary', () => {
-      const server = driver().get();
-      server.setPrimaryChannel('a');
-      expect(server.getPrimaryChannel()).toEqual('a');
+      expect(storage.getChannels()).toEqual(['a']);
     });
   });
 
   describe('authenticate()', () => {
     it('should create new user', async () => {
-      const server = driver().get();
+      const storage = storageDriver().get();
+      const server = serverDriver().withStorage(storage).get();
       server.authenticate('a', 'hunter2');
-      expect(server.getUsers()).toEqual(['a']);
+      expect(storage.getUsers()).toEqual(['a']);
     });
 
     it('should return session data for correct name/password pair', () => {
       let sessionId = Math.random();
-      const server = driver()
+      const server = serverDriver()
         .withIdGenerator({nextId: () => sessionId})
         .withUser('a', 'hunter2')
         .get();
@@ -119,7 +97,7 @@ describe('Chat Server', () => {
 
     it('should fail when password is wrong', () => {
       let sessionId = Math.random();
-      const server = driver()
+      const server = serverDriver()
         .withIdGenerator({nextId: () => sessionId})
         .withUser('a', 'hunter2')
         .get();
@@ -127,7 +105,7 @@ describe('Chat Server', () => {
     });
 
     it('should automatically join primary channel', () => {
-      const server = driver().get();
+      const server = serverDriver().get();
       server.setPrimaryChannel('main');
       server.authenticate('pete', 'hunter2');
       expect(server.getChannelUsers('main')).toEqual(['pete']);
@@ -139,19 +117,24 @@ function randomInt() {
   return Math.random() * Math.MAX_INT;
 }
 
-function driver() {
+function serverDriver() {
   let timeService = {now: () => 1};
   let idGenerator = {nextId: () => 1};
+  let storage = undefined;
   let channels = {};
   let users = {};
 
   return {
-    withIdGenerator(value){
+    withIdGenerator(value) {
       idGenerator = value;
       return this;
     },
     withTimeService(value) {
       timeService = value;
+      return this;
+    },
+    withStorage(value) {
+      storage = value;
       return this;
     },
     withChannel(name, messages = []) {
@@ -163,13 +146,21 @@ function driver() {
       return this;
     },
     get() {
-      const server = chatServer({timeService, idGenerator})();
+      const deps = {
+        timeService,
+        idGenerator,
+        storage: storage = storage || storageDriver()
+          .withIdGenerator(idGenerator)
+          .withTimeService(timeService)
+          .get()
+      };
+      const server = chatServer(deps)();
       Object.keys(channels).forEach((name) => {
         server.addChannel(name);
         channels[name].forEach((message) => server.addMessage(undefined, name, message));
       });
       Object.keys(users).forEach((name) => {
-        server.addUser(name, users[name]);
+        storage.addUser(name, users[name]);
       });
       return server;
     },
