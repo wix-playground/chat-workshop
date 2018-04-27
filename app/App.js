@@ -15,6 +15,7 @@ import {chatClientFactory} from 'wix-chat-workshop-client';
 import {DangerZone, Constants} from 'expo';
 import * as Animatable from 'react-native-animatable';
 import MessageInput from './components/message-input';
+import ChatMessage from './components/chat-message';
 
 const {Lottie} = DangerZone;
 
@@ -62,76 +63,13 @@ export default class App extends PureComponent {
 
   renderItem = ({item, index}) => {
     const messages = this.state.chatMessages[this.state.currentChannel];
-
-    const myMessage = item.from === USER_NAME;
-
-    const previousMessageSame = messages[index + 1] && messages[index + 1].from === item.from;
-
-    const showAuthor = !myMessage && !previousMessageSame;
-
-    const messageMargin = myMessage ? (previousMessageSame ? 10 : 18) : previousMessageSame ? 10 : 0;
-
     return (
-      <Animatable.View animation="fadeIn" style={{
-        flexDirection: 'row',
-        justifyContent: myMessage ? 'flex-end' : 'flex-start',
-        marginTop: showAuthor ? 18 : 0,
-      }}>
-        {showAuthor &&
-        <View style={{
-          marginLeft: 10,
-          marginTop: 4,
-          width: 40,
-          height: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#7671bc',
-        }}>
-          <Text style={{
-            fontSize: 24,
-            textAlign: 'center',
-            color: 'white'
-          }}>{item.from[0].toUpperCase()}</Text>
-        </View>
-        }
-        <View>
-          {showAuthor &&
-          <View>
-            <Text
-              style={{
-                marginHorizontal: 10,
-                fontSize: 13,
-                marginBottom: 3,
-                color: '#333333',
-              }}
-            >
-              {item.from}
-            </Text>
-          </View>
-          }
-          <View
-            style={{
-              backgroundColor: myMessage ? 'white' : '#7671bc',
-              padding: 8,
-              marginTop: messageMargin,
-              paddingHorizontal: 12,
-              marginHorizontal: myMessage || showAuthor ? 10 : 60,
-              shadowRadius: 2,
-              shadowOpacity: 1,
-              shadowColor: '#b3b3b3',
-              shadowOffset: {width: 3, height: 3},
-              marginBottom: index === 0 ? 15 : 0,
-              alignSelf: 'flex-start'
-            }}
-          >
-            <Text
-              style={{
-                color: myMessage ? 'black' : 'white'
-              }}
-            >{item.content}</Text>
-          </View>
-        </View>
-      </Animatable.View>
+      <ChatMessage
+        allMessages={messages}
+        message={item}
+        currentUser={USER_NAME}
+        index={index}
+      />
     );
   };
 
