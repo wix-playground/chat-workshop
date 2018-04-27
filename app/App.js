@@ -87,7 +87,7 @@ export default class App extends PureComponent {
   }
 
   async componentDidMount() {
-    await chatClient.connect('192.168.132.19', 8881, USER_NAME, '123');
+    await chatClient.connect('powerful-oasis-26116.herokuapp.com', 80, USER_NAME, '123');
     const channels = await chatClient.getChannels();
     this.setState({connected: true, channels});
     this.animation.reset();

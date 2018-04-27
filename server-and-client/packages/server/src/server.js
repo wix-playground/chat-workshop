@@ -10,20 +10,29 @@ class Server {
   constructor(PORT = 8080) {
     this.port = PORT;
     this.wss = null;
+    this.server = null;
     this.handlers = {};
     this.chatMessages = [];
   }
 
   start() {
     return new Promise((resolve) => {
+      const app = express()
+        .use((req, res) => res.json({}));
+
+      this.server = http
+        .createServer(app)
+        .listen(this.port, () => {
+          console.log(`Listening on ${ this.port }`);
+          resolve();
+        });
+
       const options = {
-        port: this.port,
-        host: '0.0.0.0'
+        host: '0.0.0.0',
+        server: this.server,
       };
-      this.wss = new WebSocket.Server(options, () => {
-        console.log('Listening on %d', this.port);
-        resolve();
-      });
+
+      this.wss = new WebSocket.Server(options);
 
       this.wss.on('connection', this.onConnection.bind(this));
       this.wss.on('error', this.onError.bind(this));
@@ -87,6 +96,7 @@ class Server {
 
   stop() {
     this.wss.close();
+    this.server.close();
     this.wss = null;
   }
 }
