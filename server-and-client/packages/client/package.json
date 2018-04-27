@@ -1,6 +1,6 @@
 {
   "name": "wix-chat-workshop-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "src/index.js",
   "author": "Martynas Bardauskas <martynasb@wix.com>",
