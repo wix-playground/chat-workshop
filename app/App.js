@@ -16,6 +16,7 @@ import {DangerZone, Constants} from 'expo';
 import * as Animatable from 'react-native-animatable';
 import MessageInput from './components/message-input';
 import ChatMessage from './components/chat-message';
+import Channels from './components/channels';
 import {WS_HOST, WS_PORT} from './config'
 
 const {Lottie} = DangerZone;
@@ -43,8 +44,7 @@ export default class App extends PureComponent {
     await chatClient.connect(WS_HOST, WS_PORT, USER_NAME, '123');
     const channels = await chatClient.getChannels();
     this.setState({connected: true, channels});
-    this.animation.reset();
-    this.animation.play();
+    this.channelsComponent.playAnimation();
     chatClient.onEvent('message', this.onMessageReceived);
     const messages = await chatClient.getMessages(this.state.currentChannel);
     this.setState({
@@ -212,31 +212,13 @@ export default class App extends PureComponent {
 
   renderChannels = () => {
     return (
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-        <TouchableOpacity onPress={() => {this.setState({modalVisible: true})}}>
-          <Text style={{
-            marginLeft: 10,
-            marginTop: 6,
-            fontSize: 36,
-            fontWeight: '200'
-          }}>#{this.state.currentChannel}</Text>
-        </TouchableOpacity>
-        <View>
-          <Lottie
-            ref={animation => {
-              this.animation = animation;
-            }}
-            style={{
-              marginTop: -4,
-              width: 80,
-              marginRight: -10,
-              height: 80,
-            }}
-            loop={false}
-            source={require('./checked_done.json')}
-          />
-        </View>
-      </View>
+      <Channels
+        ref={(ref) => {
+          this.channelsComponent = ref
+        }}
+        currentChannel={this.state.currentChannel}
+        onShowChannels={() => this.setState({modalVisible: true})}
+      />
     );
   };
 }
